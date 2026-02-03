@@ -22,8 +22,7 @@ from pydantic import ConfigDict
 
 from ...evaluation.eval_case import Invocation
 from ...evaluation.evaluation_generator import EvaluationGenerator
-from ...evaluation.gcs_eval_set_results_manager import GcsEvalSetResultsManager
-from ...evaluation.gcs_eval_sets_manager import GcsEvalSetsManager
+
 from ...sessions.session import Session
 
 
@@ -59,18 +58,40 @@ def create_gcs_eval_managers_from_uri(
 
   Args:
       eval_storage_uri: The evals storage URI to use. Supported URIs:
-        gs://<bucket name>. If a path is provided, the bucket will be extracted.
+        gs://<bucket name>. If a path is provided, s bucket will be extracted.
 
   Returns:
       GcsEvalManagers: The GcsEvalManagers object.
 
   Raises:
       ValueError: If the eval_storage_uri is not supported.
+      ImportError: If google-cloud-storage is not installed.
   """
   if eval_storage_uri.startswith('gs://'):
+    try:
+      from ...evaluation.gcs_eval_set_results_manager import GcsEvalSetResultsManager
+      from ...evaluation.gcs_eval_sets_manager import GcsEvalSetsManager
+    except ImportError as e:
+      raise ImportError(
+          "Cloud evaluation storage requires [gcp] extra. "
+          "Install with: pip install google-adk[gcp]"
+      ) from e
+
     gcs_bucket = eval_storage_uri.split('://')[1]
     eval_sets_manager = GcsEvalSetsManager(
         bucket_name=gcs_bucket, project=os.environ['GOOGLE_CLOUD_PROJECT']
+    )
+    eval_set_results_manager = GcsEvalSetResultsManager(
+        bucket_name=gcs_bucket, project=os.environ['GOOGLE_CLOUD_PROJECT']
+    )
+    return GcsEvalManagers(
+        eval_sets_manager=eval_sets_manager,
+        eval_set_results_manager=eval_set_results_manager,
+    )
+  else:
+    raise ValueError(
+        f'Unsupported evals storage URI: {eval_storage_uri}. Supported URIs:'
+        ' gs://<bucket name>'
     )
     eval_set_results_manager = GcsEvalSetResultsManager(
         bucket_name=gcs_bucket, project=os.environ['GOOGLE_CLOUD_PROJECT']
