@@ -93,15 +93,3 @@ def create_gcs_eval_managers_from_uri(
         f'Unsupported evals storage URI: {eval_storage_uri}. Supported URIs:'
         ' gs://<bucket name>'
     )
-    eval_set_results_manager = GcsEvalSetResultsManager(
-        bucket_name=gcs_bucket, project=os.environ['GOOGLE_CLOUD_PROJECT']
-    )
-    return GcsEvalManagers(
-        eval_sets_manager=eval_sets_manager,
-        eval_set_results_manager=eval_set_results_manager,
-    )
-  else:
-    raise ValueError(
-        f'Unsupported evals storage URI: {eval_storage_uri}. Supported URIs:'
-        ' gs://<bucket name>'
-    )
